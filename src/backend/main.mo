@@ -4,6 +4,7 @@ actor {
   let defaultTitle = "🎉 Happy Birthday Website! 🎉";
   var customTitle : ?Text = null;
   var customMessage : ?Text = null;
+  var pageViews : Nat = 0;
 
   public shared ({ caller }) func setTitle(newTitle : Text) : async () {
     customTitle := ?newTitle;
@@ -33,5 +34,15 @@ actor {
       case (?message) { message };
       case (null) { Runtime.trap("No birthday message set.") };
     };
+  };
+
+  // View counter
+  public func recordVisit() : async Nat {
+    pageViews += 1;
+    pageViews
+  };
+
+  public query func getViews() : async Nat {
+    pageViews
   };
 };

@@ -11,6 +11,8 @@ import { IDL } from '@icp-sdk/core/candid';
 export const idlService = IDL.Service({
   'getBirthdayMessage' : IDL.Func([], [IDL.Text], ['query']),
   'getTitle' : IDL.Func([], [IDL.Text], ['query']),
+  'getViews' : IDL.Func([], [IDL.Nat], ['query']),
+  'recordVisit' : IDL.Func([], [IDL.Nat], []),
   'resetBirthdayMessage' : IDL.Func([], [], []),
   'resetTitle' : IDL.Func([], [], []),
   'setBirthdayMessage' : IDL.Func([IDL.Text], [], []),
@@ -23,6 +25,8 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'getBirthdayMessage' : IDL.Func([], [IDL.Text], ['query']),
     'getTitle' : IDL.Func([], [IDL.Text], ['query']),
+    'getViews' : IDL.Func([], [IDL.Nat], ['query']),
+    'recordVisit' : IDL.Func([], [IDL.Nat], []),
     'resetBirthdayMessage' : IDL.Func([], [], []),
     'resetTitle' : IDL.Func([], [], []),
     'setBirthdayMessage' : IDL.Func([IDL.Text], [], []),

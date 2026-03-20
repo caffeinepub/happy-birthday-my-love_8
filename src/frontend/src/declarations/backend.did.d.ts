@@ -13,6 +13,8 @@ import type { Principal } from '@icp-sdk/core/principal';
 export interface _SERVICE {
   'getBirthdayMessage' : ActorMethod<[], string>,
   'getTitle' : ActorMethod<[], string>,
+  'getViews' : ActorMethod<[], bigint>,
+  'recordVisit' : ActorMethod<[], bigint>,
   'resetBirthdayMessage' : ActorMethod<[], undefined>,
   'resetTitle' : ActorMethod<[], undefined>,
   'setBirthdayMessage' : ActorMethod<[string], undefined>,
