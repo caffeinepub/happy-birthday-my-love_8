@@ -4,7 +4,7 @@ actor {
   let defaultTitle = "🎉 Happy Birthday Website! 🎉";
   var customTitle : ?Text = null;
   var customMessage : ?Text = null;
-  var pageViews : Nat = 0;
+  stable var pageViews : Nat = 0;
 
   public shared ({ caller }) func setTitle(newTitle : Text) : async () {
     customTitle := ?newTitle;

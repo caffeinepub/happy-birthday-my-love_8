@@ -1,6 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { WalkingCatsLayer } from "./components/WalkingCat";
-import { createActorWithConfig } from "./config";
+
+// ─── Photo Modal Context ──────────────────────────────────────────────────────
+type PhotoModalData = { src: string; label: string; color: string } | null;
+const PhotoModalContext = createContext<(data: PhotoModalData) => void>(
+  () => {},
+);
+function useOpenPhoto() {
+  return useContext(PhotoModalContext);
+}
 
 // ─── Colorful Particle Canvas ──────────────────────────────────────────────────
 function ParticleCanvas() {
@@ -230,36 +245,271 @@ interface Achievement {
   emoji: string;
 }
 
-function GameHUD() {
-  const [views, setViews] = useState<number>(0);
+function BirthdayFireworks({ onClose }: { onClose: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    createActorWithConfig()
-      .then((actor: any) => {
-        actor
-          .recordVisit()
-          .then((count) => {
-            setViews(Number(count));
-          })
-          .catch(() => {
-            /* silently ignore */
-          });
-      })
-      .catch(() => {
-        /* silently ignore */
-      });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      color: string;
+      alpha: number;
+      size: number;
+      gravity: number;
+    }[] = [];
+
+    const colors = [
+      "#ff6b6b",
+      "#ffd93d",
+      "#6bcb77",
+      "#4d96ff",
+      "#ff6fc8",
+      "#c77dff",
+      "#48cae4",
+      "#f72585",
+      "#7209b7",
+      "#3a86ff",
+    ];
+
+    function launchFirework() {
+      const x = Math.random() * canvas!.width;
+      const y = Math.random() * canvas!.height * 0.6;
+      const count = 60 + Math.floor(Math.random() * 60);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 5;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          size: 2 + Math.random() * 3,
+          gravity: 0.05 + Math.random() * 0.08,
+        });
+      }
+    }
+
+    let frameId: number;
+    let launchTimer: ReturnType<typeof setInterval>;
+    let active = true;
+
+    launchFirework();
+    launchTimer = setInterval(() => {
+      if (active) launchFirework();
+    }, 600);
+
+    function animate() {
+      if (!active) return;
+      ctx!.fillStyle = "rgba(0,0,0,0.15)";
+      ctx!.fillRect(0, 0, canvas!.width, canvas!.height);
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.98;
+        p.alpha -= 0.012;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx!.save();
+        ctx!.globalAlpha = p.alpha;
+        ctx!.fillStyle = p.color;
+        ctx!.beginPath();
+        ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx!.fill();
+        ctx!.restore();
+      }
+      frameId = requestAnimationFrame(animate);
+    }
+    animate();
+
+    const handleResize = () => {
+      canvas!.width = window.innerWidth;
+      canvas!.height = window.innerHeight;
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      active = false;
+      clearInterval(launchTimer);
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
+
+  return (
+    <>
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 9999,
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 10000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(0,0,0,0.6)",
+        }}
+        onClick={onClose}
+        onKeyDown={(e) => e.key === "Escape" && onClose()}
+        role="presentation"
+        data-ocid="birthday.modal"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+          style={{
+            background: "oklch(0.12 0.08 280 / 0.97)",
+            border: "2px solid oklch(0.75 0.25 320 / 0.8)",
+            borderRadius: "2rem",
+            padding: "3rem 3.5rem",
+            textAlign: "center",
+            maxWidth: "480px",
+            width: "90vw",
+            boxShadow: "0 0 80px oklch(0.55 0.25 320 / 0.5)",
+            backdropFilter: "blur(20px)",
+            animation: "birthday-pop 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+        >
+          <div style={{ fontSize: "3rem", marginBottom: "0.5rem" }}>
+            🎆🎇✨🎉🎊
+          </div>
+          <h1
+            style={{
+              fontSize: "clamp(1.8rem, 6vw, 3rem)",
+              fontWeight: 900,
+              background:
+                "linear-gradient(135deg, #ff6fc8, #ffd93d, #6bcb77, #4d96ff)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              lineHeight: 1.2,
+              marginBottom: "1rem",
+            }}
+          >
+            Happy Birthday
+            <br />
+            Meghna !!!
+          </h1>
+          <div style={{ fontSize: "2.5rem", marginBottom: "1.5rem" }}>
+            ❤️ ❤️ ❤️
+          </div>
+          <p
+            style={{
+              color: "oklch(0.85 0.08 280)",
+              marginBottom: "2rem",
+              fontSize: "1rem",
+            }}
+          >
+            Wishing you the most magical day, babe! 🥳
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            data-ocid="birthday.close_button"
+            style={{
+              background:
+                "linear-gradient(135deg, oklch(0.55 0.25 320), oklch(0.55 0.2 280))",
+              border: "none",
+              borderRadius: "999px",
+              padding: "0.75rem 2.5rem",
+              color: "white",
+              fontWeight: 700,
+              fontSize: "1rem",
+              cursor: "pointer",
+            }}
+          >
+            Thank you! 🎂
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function GameHUD() {
   const [scrollPct, setScrollPct] = useState(0);
   const [achievement, setAchievement] = useState<Achievement | null>(null);
   const [hiding, setHiding] = useState(false);
   const unlockedRef = useRef<Set<string>>(new Set());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const BIRTHDAY = new Date(2026, 3, 6, 0, 0, 0);
+  const isBirthday = () => {
+    const now = new Date();
+    return now.getMonth() === 3 && now.getDate() === 6;
+  };
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const now = new Date();
+    return Math.max(0, BIRTHDAY.getTime() - now.getTime());
+  });
+  const [showBirthday, setShowBirthday] = useState(() => isBirthday());
+  const birthdayTriggeredRef = useRef(false);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: BIRTHDAY is a stable const
+  useEffect(() => {
+    const nowCheck = new Date();
+    if (
+      nowCheck.getMonth() === 3 &&
+      nowCheck.getDate() === 6 &&
+      !birthdayTriggeredRef.current
+    ) {
+      birthdayTriggeredRef.current = true;
+      setShowBirthday(true);
+    }
+    const iv = setInterval(() => {
+      const now = new Date();
+      const diff = BIRTHDAY.getTime() - now.getTime();
+      if (diff <= 0) {
+        setTimeLeft(0);
+        if (!birthdayTriggeredRef.current) {
+          birthdayTriggeredRef.current = true;
+          setShowBirthday(true);
+        }
+      } else {
+        setTimeLeft(diff);
+      }
+    }, 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(
+    (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  );
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
   const sectionAchievements: Record<string, Achievement> = {
     story: { id: "story", emoji: "✨", text: "Chapter Unlocked!" },
     "for-you": { id: "for-you", emoji: "💫", text: "Love Story Found!" },
     gallery: { id: "gallery", emoji: "📸", text: "Gallery Discovered!" },
-    gifts: { id: "gifts", emoji: "🎁", text: "Gifts Revealed!" },
     "love-letter": {
       id: "love-letter",
       emoji: "💌",
@@ -285,8 +535,6 @@ function GameHUD() {
       const docH = document.documentElement.scrollHeight - window.innerHeight;
       const pct = docH > 0 ? (scrollTop / docH) * 100 : 0;
       setScrollPct(pct);
-
-      // Section detection
       for (const [id, ach] of Object.entries(sectionAchievements)) {
         const el = document.getElementById(id);
         if (!el) continue;
@@ -309,34 +557,73 @@ function GameHUD() {
         aria-hidden="true"
       />
 
-      {/* Views counter */}
+      {/* Birthday Countdown Widget */}
       <div
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full"
+        className="fixed bottom-6 right-6 z-50 flex flex-col items-center px-4 py-3 rounded-2xl"
         style={{
-          background: "oklch(0.14 0.06 220 / 0.90)",
-          border: "2px solid oklch(0.55 0.16 196 / 0.50)",
+          background: "oklch(0.14 0.06 280 / 0.92)",
+          border: "2px solid oklch(0.55 0.20 320 / 0.60)",
           backdropFilter: "blur(12px)",
+          boxShadow: "0 0 24px oklch(0.55 0.20 320 / 0.25)",
+          minWidth: "160px",
         }}
-        data-ocid="hud.panel"
+        data-ocid="birthday.panel"
       >
-        <span style={{ fontSize: "1.1rem" }}>👁</span>
         <span
-          className="font-bold text-sm tabular-nums"
-          style={{ color: "oklch(0.82 0.18 196)", minWidth: "3ch" }}
+          style={{
+            fontSize: "0.65rem",
+            color: "oklch(0.75 0.15 320)",
+            letterSpacing: "0.08em",
+            fontWeight: 700,
+            marginBottom: "4px",
+          }}
         >
-          {views.toLocaleString()}
+          🎂 Birthday Countdown
         </span>
-        <span className="text-xs" style={{ color: "oklch(0.60 0.08 196)" }}>
-          views
-        </span>
+        {timeLeft > 0 ? (
+          <div className="flex gap-2 items-end">
+            {[
+              { v: days, l: "D" },
+              { v: hours, l: "H" },
+              { v: minutes, l: "M" },
+              { v: seconds, l: "S" },
+            ].map(({ v, l }) => (
+              <div key={l} className="flex flex-col items-center">
+                <span
+                  className="font-black tabular-nums"
+                  style={{
+                    color: "oklch(0.92 0.18 196)",
+                    fontSize: "1.15rem",
+                    lineHeight: 1,
+                  }}
+                >
+                  {String(v).padStart(2, "0")}
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.55rem",
+                    color: "oklch(0.60 0.10 280)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {l}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span style={{ fontSize: "1.2rem" }}>🎉 Today!</span>
+        )}
       </div>
+
+      {showBirthday && (
+        <BirthdayFireworks onClose={() => setShowBirthday(false)} />
+      )}
 
       {/* Achievement toast */}
       {achievement && (
         <div
-          className={`fixed bottom-20 right-6 z-50 achievement-toast${
-            hiding ? " hiding" : ""
-          } flex items-center gap-3 px-5 py-3 rounded-2xl`}
+          className={`fixed bottom-36 right-6 z-50 achievement-toast${hiding ? " hiding" : ""} flex items-center gap-3 px-5 py-3 rounded-2xl`}
           style={{
             background: "oklch(0.18 0.06 280 / 0.92)",
             border: "2px solid oklch(0.82 0.18 196 / 0.50)",
@@ -372,13 +659,16 @@ function PhotoSlot({
   className = "",
   style,
   glowColor,
+  color = "oklch(0.65 0.18 196)",
 }: {
   label?: string;
   src?: string;
   className?: string;
   style?: React.CSSProperties;
   glowColor?: string;
+  color?: string;
 }) {
+  const openPhoto = useOpenPhoto();
   if (src) {
     return (
       <div
@@ -388,6 +678,12 @@ function PhotoSlot({
           border: glowColor ? `2px solid ${glowColor}` : undefined,
           padding: 0,
           overflow: "hidden",
+          cursor: "pointer",
+        }}
+        onClick={() => openPhoto({ src, label, color: glowColor ?? color })}
+        onKeyDown={(e) => {
+          if (e.key === "Enter")
+            openPhoto({ src, label, color: glowColor ?? color });
         }}
       >
         <img
@@ -434,7 +730,6 @@ function Navbar() {
     { label: "Our Story", href: "#story" },
     { label: "For You", href: "#for-you" },
     { label: "Gallery", href: "#gallery" },
-    { label: "Gifts", href: "#gifts" },
     { label: "Love Letter", href: "#love-letter" },
   ];
 
@@ -541,6 +836,37 @@ function Navbar() {
 }
 
 // ─── Hero Section ─────────────────────────────────────────────────────────────
+function HeroImage() {
+  const openPhoto = useOpenPhoto();
+  return (
+    <img
+      src="/assets/uploads/20260114_180045-1-1.jpg"
+      alt="Meghna"
+      className="w-full rounded-3xl object-cover"
+      style={{
+        aspectRatio: "3/4",
+        boxShadow: "0 0 40px oklch(0.55 0.18 196 / 0.5)",
+        cursor: "pointer",
+      }}
+      onClick={() =>
+        openPhoto({
+          src: "/assets/uploads/20260114_180045-1-1.jpg",
+          label: "Meghna",
+          color: "oklch(0.65 0.18 196)",
+        })
+      }
+      onKeyDown={(e) => {
+        if (e.key === "Enter")
+          openPhoto({
+            src: "/assets/uploads/20260114_180045-1-1.jpg",
+            label: "Meghna",
+            color: "oklch(0.65 0.18 196)",
+          });
+      }}
+    />
+  );
+}
+
 function Hero() {
   return (
     <section
@@ -618,15 +944,7 @@ function Hero() {
             style={{ transitionDelay: "0.2s" }}
           >
             <div className="relative" style={{ width: "min(340px, 80vw)" }}>
-              <img
-                src="/assets/uploads/20260114_180045-1-1.jpg"
-                alt="Meghna"
-                className="w-full rounded-3xl object-cover"
-                style={{
-                  aspectRatio: "3/4",
-                  boxShadow: "0 0 40px oklch(0.55 0.18 196 / 0.5)",
-                }}
-              />
+              <HeroImage />
               <div
                 className="absolute -bottom-4 -right-4 px-4 py-2 text-sm font-bold rounded-2xl"
                 style={{
@@ -664,22 +982,15 @@ const timelineEntries = [
   {
     title: "The Day We Met",
     date: "[ Date ]",
-    text: "The story of how we met our universe began the moment I first saw you, Meghna. From that very instant, everything changed.",
+    text: "Seven years ago you walked into my life and I had absolutely no idea what was coming for me. You were just this girl with the brightest eyes and the loudest laugh. Little did I know, you would become everything.",
     side: "left" as const,
     accent: "oklch(0.82 0.18 196)",
-  },
-  {
-    title: "Our First Date",
-    date: "[ Date ]",
-    text: "Describe your first date together here. Every detail the place, the conversation, the nervous excitement all those little moments that made the night unforgettable.",
-    side: "right" as const,
-    accent: "oklch(0.75 0.20 350)",
-    image: "/assets/uploads/IMG_20240501_190730-1.jpg",
+    image: "/assets/uploads/IMG-20191002-WA0084-1.jpg",
   },
   {
     title: "When I Knew",
     date: "[ Date ]",
-    text: "Tell the story of the moment you realized she was the one. Maybe it was a quiet Tuesday, or a grand adventure but something clicked and you knew this was real love.",
+    text: "There was this one quiet moment when I looked at you and just knew. No drama, no fireworks. Just this deep, calm certainty that I wanted every ordinary day to have you in it. That was the moment, Meghna.",
     side: "left" as const,
     accent: "oklch(0.82 0.16 72)",
     image: "/assets/uploads/IMG_20240501_190730-1.jpg",
@@ -687,7 +998,7 @@ const timelineEntries = [
   {
     title: "Today & Always",
     date: "[ Date ]",
-    text: "The story isn't over it's just beginning. Today on her birthday, celebrate how far you've come together and all the beautiful chapters still ahead.",
+    text: "Seven years of friendship, of love, of growing up together and I would choose you again in every lifetime. Happy Birthday, babe. Here is to forever with you.",
     side: "right" as const,
     accent: "oklch(0.82 0.18 135)",
     image: "/assets/uploads/20260114_180045-1-1.jpg",
@@ -897,6 +1208,8 @@ function ForYouSection() {
               tag: "✦ Her Beauty",
               title: "Your Radiance & Grace",
               photo: "Meghna's Photo",
+              photoSrc:
+                "/assets/uploads/WhatsApp-Image-2026-03-20-at-3.19.26-PM-5.jpeg",
               text: "Meghna, your beauty is unlike anything in this universe the way you smile lights up every room, and every moment with you feels like the most beautiful thing I've ever witnessed.",
             },
             {
@@ -904,6 +1217,7 @@ function ForYouSection() {
               tag: "✦ Her Mind",
               title: "Your Brilliant Mind",
               photo: "Meghna's Photo",
+              photoSrc: "/assets/uploads/IMG-20250413-WA0012-6.jpg",
               text: "Meghna, your mind is one of the most extraordinary things about you. Your brilliance, creativity, and the way you see the world never ceases to amaze me you inspire me every single day.",
             },
           ].map((card, cardIdx) => (
@@ -918,6 +1232,7 @@ function ForYouSection() {
               <div style={{ padding: "1.75rem" }}>
                 <PhotoSlot
                   label={card.photo}
+                  src={card.photoSrc}
                   className="mb-5 w-full"
                   style={{ height: 220 } as React.CSSProperties}
                   glowColor={card.color}
@@ -969,6 +1284,7 @@ const gallerySlots = [
     label: "Gokarna Vibes 🌺",
     color: "oklch(0.72 0.22 295)",
     src: "/assets/uploads/20260208_124551-11.jpg",
+    rotate: 90,
   },
   {
     label: "Burger Queen 🍔",
@@ -1013,17 +1329,8 @@ const gallerySlots = [
 ];
 
 function GallerySection() {
-  const [selectedPhoto, setSelectedPhoto] = useState<
-    (typeof gallerySlots)[0] | null
-  >(null);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedPhoto(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const openPhoto = useOpenPhoto();
+  const setSelectedPhoto = openPhoto;
 
   return (
     <section id="gallery" className="section section-gallery">
@@ -1098,6 +1405,10 @@ function GallerySection() {
                     height: "100%",
                     objectFit: "contain",
                     display: "block",
+                    transform: (slot as any).rotate
+                      ? `rotate(${(slot as any).rotate}deg)`
+                      : undefined,
+                    transformOrigin: "center center",
                   }}
                 />
               </div>
@@ -1145,6 +1456,10 @@ function GallerySection() {
                     height: "100%",
                     objectFit: "contain",
                     display: "block",
+                    transform: (slot as any).rotate
+                      ? `rotate(${(slot as any).rotate}deg)`
+                      : undefined,
+                    transformOrigin: "center center",
                   }}
                 />
               </div>
@@ -1193,6 +1508,10 @@ function GallerySection() {
                     height: "100%",
                     objectFit: "contain",
                     display: "block",
+                    transform: (slot as any).rotate
+                      ? `rotate(${(slot as any).rotate}deg)`
+                      : undefined,
+                    transformOrigin: "center center",
                   }}
                 />
               </div>
@@ -1207,227 +1526,6 @@ function GallerySection() {
                 }}
               >
                 {slot.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Modal */}
-      {selectedPhoto && (
-        <div
-          data-ocid="gallery.modal"
-          tabIndex={-1}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setSelectedPhoto(null);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "oklch(0.05 0.02 260 / 0.93)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            animation: "fadeIn 0.2s ease",
-          }}
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <div
-            onKeyDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <img
-              src={selectedPhoto.src}
-              alt={selectedPhoto.label}
-              style={{
-                maxWidth: "90vw",
-                maxHeight: "80vh",
-                objectFit: "contain",
-                borderRadius: 16,
-                boxShadow: `0 0 60px ${selectedPhoto.color}44`,
-                border: `2px solid ${selectedPhoto.color}88`,
-              }}
-            />
-          </div>
-          <div
-            className="mt-4 px-5 py-2 rounded-full font-bold uppercase tracking-widest text-sm"
-            style={{
-              background: `${selectedPhoto.color}22`,
-              color: selectedPhoto.color,
-              border: `1px solid ${selectedPhoto.color}66`,
-              backdropFilter: "blur(10px)",
-            }}
-          >
-            {selectedPhoto.label}
-          </div>
-          <button
-            type="button"
-            data-ocid="gallery.close_button"
-            onClick={() => setSelectedPhoto(null)}
-            className="mt-4 px-4 py-1 rounded-full text-sm opacity-60 hover:opacity-100 transition-opacity"
-            style={{
-              color: "oklch(0.85 0.04 260)",
-              border: "1px solid oklch(0.40 0.04 260)",
-            }}
-          >
-            ✕ Close
-          </button>
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ─── Gifts Section ────────────────────────────────────────────────────────────
-const giftCards = [
-  {
-    title: "Special Gift #1 for Meghna",
-    gradient:
-      "linear-gradient(135deg, oklch(0.22 0.10 40), oklch(0.28 0.12 350))",
-    accent: "oklch(0.82 0.16 72)",
-    emoji: "🎁",
-    sparkles: ["✨", "⭐", "💫"],
-  },
-  {
-    title: "Special Gift #2 for Meghna",
-    gradient:
-      "linear-gradient(135deg, oklch(0.22 0.10 350), oklch(0.26 0.12 295))",
-    accent: "oklch(0.75 0.20 350)",
-    emoji: "🎀",
-    sparkles: ["💖", "✨", "🌸"],
-  },
-  {
-    title: "Special Gift #3 for Meghna",
-    gradient:
-      "linear-gradient(135deg, oklch(0.20 0.10 295), oklch(0.24 0.12 196))",
-    accent: "oklch(0.82 0.18 196)",
-    emoji: "🌟",
-    sparkles: ["💜", "⭐", "✨"],
-  },
-];
-
-function GiftsSection() {
-  return (
-    <section id="gifts" className="section section-gifts">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-16 reveal">
-          <SectionBadge
-            chapter="Chapter 5"
-            label="Gifts For You"
-            color="oklch(0.82 0.16 72)"
-          />
-          <h2
-            className="font-display mt-5"
-            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
-          >
-            <span className="gold-text">With Love, For You 🎁</span>
-          </h2>
-          <p
-            className="mt-3 text-base"
-            style={{ color: "oklch(0.72 0.08 40)" }}
-          >
-            Something special is coming... check back soon!
-          </p>
-          <div
-            className="mx-auto mt-4"
-            style={{
-              width: 80,
-              height: 3,
-              background:
-                "linear-gradient(90deg, transparent, oklch(0.82 0.16 72), transparent)",
-              borderRadius: 4,
-            }}
-          />
-        </div>
-
-        <div className="grid sm:grid-cols-3 gap-6 stagger-grid">
-          {giftCards.map((card, i) => (
-            <div
-              key={card.title}
-              className="gift-card reveal"
-              style={{
-                background: card.gradient,
-                transitionDelay: `${i * 0.14}s`,
-                minHeight: 280,
-              }}
-              data-ocid={`gifts.item.${i + 1}`}
-            >
-              {/* Sparkle overlay */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(circle at 30% 30%, oklch(1 0 0 / 0.06) 0%, transparent 60%)",
-                  borderRadius: 24,
-                }}
-              />
-              {/* Lock overlay */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
-                {/* Floating sparkles */}
-                <div className="flex gap-2 mb-1">
-                  {card.sparkles.map((s, sparkleIdx) => (
-                    <span
-                      key={s}
-                      className="sparkle"
-                      style={{
-                        fontSize: "1.2rem",
-                        animationDelay: `${sparkleIdx * 0.4}s`,
-                      }}
-                    >
-                      {s}
-                    </span>
-                  ))}
-                </div>
-
-                <span
-                  style={{
-                    fontSize: "4rem",
-                    animation: "bounce-float 3s ease-in-out infinite",
-                    display: "inline-block",
-                    animationDelay: `${i * 0.4}s`,
-                  }}
-                >
-                  {card.emoji}
-                </span>
-
-                <div>
-                  <div
-                    className="text-2xl mb-1"
-                    style={{ color: "oklch(0.95 0.02 40)" }}
-                  >
-                    🔒
-                  </div>
-                  <h3
-                    className="font-display text-lg font-bold"
-                    style={{ color: card.accent }}
-                  >
-                    {card.title}
-                  </h3>
-                  <p
-                    className="text-xs mt-1 uppercase tracking-widest"
-                    style={{ color: "oklch(0.70 0.06 40)" }}
-                  >
-                    Mystery unlocking soon…
-                  </p>
-                </div>
-
-                {/* Dotted border decoration */}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 8,
-                    borderRadius: 18,
-                    border: `2px dashed ${card.accent}44`,
-                    pointerEvents: "none",
-                  }}
-                />
               </div>
             </div>
           ))}
@@ -1571,7 +1669,6 @@ function Footer() {
     { label: "Our Story", href: "#story" },
     { label: "For You", href: "#for-you" },
     { label: "Gallery", href: "#gallery" },
-    { label: "Gifts", href: "#gifts" },
     { label: "Love Letter", href: "#love-letter" },
   ];
 
@@ -1632,35 +1729,114 @@ function Footer() {
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
   useScrollReveal();
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoModalData>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedPhoto(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--cosmic-indigo)", position: "relative" }}
-    >
-      {/* Particle canvas */}
-      <ParticleCanvas />
+    <PhotoModalContext.Provider value={setSelectedPhoto}>
+      <div
+        className="min-h-screen"
+        style={{ background: "var(--cosmic-indigo)", position: "relative" }}
+      >
+        {/* Particle canvas */}
+        <ParticleCanvas />
 
-      {/* Game HUD */}
-      <GameHUD />
+        {/* Game HUD */}
+        <GameHUD />
 
-      {/* Navigation */}
-      <Navbar />
+        {/* Navigation */}
+        <Navbar />
 
-      {/* Main content */}
-      <main>
-        <Hero />
-        <TimelineSection />
-        <ForYouSection />
-        <GallerySection />
-        <GiftsSection />
-        <LoveLetter />
-      </main>
+        {/* Main content */}
+        <main>
+          <Hero />
+          <TimelineSection />
+          <ForYouSection />
+          <GallerySection />
+          <LoveLetter />
+        </main>
 
-      <Footer />
+        <Footer />
 
-      {/* Walking Cat */}
-      <WalkingCatsLayer />
-    </div>
+        {/* Walking Cat */}
+        <WalkingCatsLayer />
+
+        {/* Global Photo Modal */}
+        {selectedPhoto && (
+          <div
+            data-ocid="gallery.modal"
+            tabIndex={-1}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setSelectedPhoto(null);
+            }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              background: "oklch(0.05 0.02 260 / 0.93)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              animation: "fadeIn 0.2s ease",
+            }}
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <div
+              onKeyDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <img
+                src={selectedPhoto.src}
+                alt={selectedPhoto.label}
+                style={{
+                  maxWidth: "90vw",
+                  maxHeight: "80vh",
+                  objectFit: "contain",
+                  borderRadius: 16,
+                  boxShadow: `0 0 60px ${selectedPhoto.color}44`,
+                  border: `2px solid ${selectedPhoto.color}88`,
+                }}
+              />
+            </div>
+            <div
+              className="mt-4 px-5 py-2 rounded-full font-bold uppercase tracking-widest text-sm"
+              style={{
+                background: `${selectedPhoto.color}22`,
+                color: selectedPhoto.color,
+                border: `1px solid ${selectedPhoto.color}66`,
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              {selectedPhoto.label}
+            </div>
+            <button
+              type="button"
+              data-ocid="gallery.close_button"
+              onClick={() => setSelectedPhoto(null)}
+              className="mt-4 px-4 py-1 rounded-full text-sm opacity-60 hover:opacity-100 transition-opacity"
+              style={{
+                color: "oklch(0.85 0.04 260)",
+                border: "1px solid oklch(0.40 0.04 260)",
+              }}
+            >
+              ✕ Close
+            </button>
+          </div>
+        )}
+      </div>
+    </PhotoModalContext.Provider>
   );
 }

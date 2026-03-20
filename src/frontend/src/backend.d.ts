@@ -14,4 +14,6 @@ export interface backendInterface {
     resetTitle(): Promise<void>;
     setBirthdayMessage(message: string): Promise<void>;
     setTitle(newTitle: string): Promise<void>;
+    recordVisit(): Promise<bigint>;
+    getViews(): Promise<bigint>;
 }
