@@ -1,0 +1,355 @@
+@import url("https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Figtree";
+  src: url("/assets/fonts/Figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 1.125rem;
+
+    /* Dark romantic palette */
+    --background: 0.085 0.012 300;
+    --foreground: 0.93 0.01 340;
+    --card: 0.13 0.018 340;
+    --card-foreground: 0.93 0.01 340;
+    --popover: 0.13 0.018 340;
+    --popover-foreground: 0.93 0.01 340;
+    --primary: 0.75 0.08 72;
+    --primary-foreground: 0.12 0.01 300;
+    --secondary: 0.72 0.09 350;
+    --secondary-foreground: 0.12 0.01 300;
+    --muted: 0.18 0.015 340;
+    --muted-foreground: 0.72 0.015 340;
+    --accent: 0.72 0.09 350;
+    --accent-foreground: 0.12 0.01 300;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.28 0.022 340;
+    --input: 0.28 0.022 340;
+    --ring: 0.75 0.08 72;
+    --chart-1: 0.75 0.08 72;
+    --chart-2: 0.72 0.09 350;
+    --chart-3: 0.6 0.07 340;
+    --chart-4: 0.65 0.06 300;
+    --chart-5: 0.55 0.05 340;
+    --sidebar: 0.13 0.018 340;
+    --sidebar-foreground: 0.93 0.01 340;
+    --sidebar-primary: 0.75 0.08 72;
+    --sidebar-primary-foreground: 0.12 0.01 300;
+    --sidebar-accent: 0.18 0.015 340;
+    --sidebar-accent-foreground: 0.93 0.01 340;
+    --sidebar-border: 0.28 0.022 340;
+    --sidebar-ring: 0.75 0.08 72;
+
+    /* Custom tokens */
+    --gold: oklch(0.75 0.08 72);
+    --gold-dim: oklch(0.65 0.07 72);
+    --blush: oklch(0.72 0.09 350);
+    --blush-dim: oklch(0.6 0.07 350);
+    --surface: oklch(0.13 0.018 340 / 0.85);
+    --surface-solid: oklch(0.13 0.018 340);
+    --timeline-line: oklch(0.75 0.08 72 / 0.5);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Figtree", sans-serif;
+    background-color: oklch(0.085 0.012 300);
+    overflow-x: hidden;
+  }
+}
+
+/* ── Custom animations ── */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(var(--drift, 30px)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px 2px oklch(0.72 0.09 350 / 0.3), 0 0 28px 6px
+      oklch(0.75 0.08 72 / 0.15);
+  }
+  50% {
+    box-shadow: 0 0 22px 6px oklch(0.72 0.09 350 / 0.55), 0 0 48px 12px
+      oklch(0.75 0.08 72 / 0.25);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.15);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
+/* ── Scroll reveal ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-50px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.reveal-right {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── Gradient text ── */
+.gold-text {
+  background: linear-gradient(135deg, #d6b07a 0%, #f0d4a0 50%, #cfa46d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #d6b07a 0%,
+    #f0d4a0 25%,
+    #e6a2b0 50%,
+    #f0d4a0 75%,
+    #d6b07a 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ── Glass card ── */
+.glass-card {
+  background: oklch(0.13 0.018 340 / 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid oklch(0.35 0.03 340 / 0.4);
+  border-radius: 18px;
+}
+
+/* ── Photo placeholder ── */
+.photo-placeholder {
+  background: oklch(0.16 0.02 340 / 0.8);
+  border: 2px solid oklch(0.75 0.08 72 / 0.5);
+  border-radius: 16px;
+  animation: pulse-glow 3s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: oklch(0.72 0.015 340);
+  font-family: "Figtree", sans-serif;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* ── Timeline ── */
+.timeline-spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    oklch(0.75 0.08 72 / 0),
+    oklch(0.75 0.08 72 / 0.8),
+    oklch(0.75 0.08 72 / 0)
+  );
+  transform: translateX(-50%);
+  transition: height 0.3s ease;
+}
+
+.timeline-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: oklch(0.75 0.08 72);
+  border: 3px solid oklch(0.085 0.012 300);
+  box-shadow: 0 0 16px 4px oklch(0.75 0.08 72 / 0.5);
+  flex-shrink: 0;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  background: linear-gradient(135deg, oklch(0.75 0.08 72), oklch(0.65 0.07 72));
+  color: oklch(0.12 0.01 300);
+  border-radius: 9999px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px oklch(0.75 0.08 72 / 0.4);
+}
+
+.btn-outline {
+  background: transparent;
+  color: oklch(0.75 0.08 72);
+  border: 1.5px solid oklch(0.75 0.08 72 / 0.6);
+  border-radius: 9999px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-outline:hover {
+  background: oklch(0.75 0.08 72 / 0.1);
+  border-color: oklch(0.75 0.08 72);
+  box-shadow: 0 0 20px oklch(0.75 0.08 72 / 0.2);
+}
+
+/* ── Star field ── */
+#particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Section spacing ── */
+.section {
+  position: relative;
+  z-index: 1;
+  padding: 6rem 1.5rem;
+}
+
+/* ── Nav ── */
+.nav-link {
+  color: oklch(0.72 0.015 340);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+  text-decoration: none;
+}
+.nav-link:hover {
+  color: oklch(0.75 0.08 72);
+}
+
+/* ── Responsive overrides ── */
+@media (max-width: 768px) {
+  .timeline-item-left,
+  .timeline-item-right {
+    flex-direction: column !important;
+  }
+  .timeline-spine {
+    left: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-left,
+  .reveal-right {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  .photo-placeholder {
+    animation: none;
+  }
+  #particle-canvas {
+    display: none;
+  }
+}
