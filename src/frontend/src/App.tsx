@@ -10,6 +10,7 @@ import { WalkingCatsLayer } from "./components/WalkingCat";
 
 // ─── Photo Modal Context ──────────────────────────────────────────────────────
 type PhotoModalData = { src: string; label: string; color: string } | null;
+const BirthdayContext = createContext<boolean>(false);
 const PhotoModalContext = createContext<(data: PhotoModalData) => void>(
   () => {},
 );
@@ -1312,11 +1313,6 @@ const gallerySlots = [
     src: "/assets/uploads/IMG-20250413-WA0012-6.jpg",
   },
   {
-    label: "Coldplay with You 🎵",
-    color: "oklch(0.82 0.18 135)",
-    src: "/assets/uploads/IMG-20250119-WA0027-7.jpg",
-  },
-  {
     label: "Sunset Together 🌅",
     color: "oklch(0.75 0.20 350)",
     src: "/assets/uploads/IMG-20250121-WA0170-8.jpg",
@@ -1481,7 +1477,7 @@ function GallerySection() {
 
         {/* Row 3: 4 medium photos */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {gallerySlots.slice(7, 11).map((slot, i) => (
+          {gallerySlots.slice(7, 10).map((slot, i) => (
             <div
               key={slot.label}
               className="gallery-slot reveal relative"
@@ -1537,8 +1533,66 @@ function GallerySection() {
 
 // ─── Love Letter Section ──────────────────────────────────────────────────────
 function LoveLetter() {
+  const isBirthday = useContext(BirthdayContext);
+  const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
+  const setSelectedPhoto = useContext(PhotoModalContext);
+
+  useEffect(() => {
+    if (isBirthday) {
+      const t1 = setTimeout(() => setEnvelopeOpen(true), 500);
+      const t2 = setTimeout(() => setShowFireworks(true), 800);
+      const t3 = setTimeout(() => setShowFireworks(false), 3500);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [isBirthday]);
+
+  const fireworkColors = [
+    "oklch(0.82 0.18 196)",
+    "oklch(0.75 0.20 350)",
+    "oklch(0.82 0.16 72)",
+    "oklch(0.82 0.18 135)",
+    "oklch(0.72 0.22 295)",
+    "oklch(0.90 0.16 50)",
+    "oklch(0.85 0.20 160)",
+    "oklch(0.80 0.22 310)",
+  ];
+
+  const fireworkParticles = Array.from({ length: 28 }, (_, i) => ({
+    id: i,
+    color: fireworkColors[i % fireworkColors.length],
+    top: `${10 + Math.random() * 80}%`,
+    left: `${5 + Math.random() * 90}%`,
+    delay: `${Math.random() * 1.5}s`,
+    size: `${6 + Math.floor(Math.random() * 8)}px`,
+  }));
+
   return (
-    <section id="love-letter" className="section section-letter">
+    <section
+      id="love-letter"
+      className="section section-letter"
+      style={{ position: "relative", overflow: "hidden" }}
+    >
+      {showFireworks &&
+        fireworkParticles.map((p) => (
+          <div
+            key={p.id}
+            className="firework-particle"
+            style={{
+              top: p.top,
+              left: p.left,
+              background: p.color,
+              width: p.size,
+              height: p.size,
+              animationDelay: p.delay,
+              boxShadow: `0 0 6px ${p.color}`,
+            }}
+          />
+        ))}
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12 reveal relative">
           <SectionBadge
@@ -1557,82 +1611,156 @@ function LoveLetter() {
           </h2>
         </div>
 
-        <div
-          className="glass-card reveal overflow-hidden"
-          style={{
-            transitionDelay: "0.1s",
-            border: "1px solid oklch(0.75 0.20 350 / 0.30)",
-          }}
-        >
-          <div className="grid md:grid-cols-5 gap-0">
-            <div
-              className="md:col-span-3 p-8 md:p-12"
-              style={{ borderRight: "1px solid oklch(0.35 0.08 350 / 0.3)" }}
+        {!isBirthday ? (
+          <div className="envelope-wrapper reveal">
+            <div className="envelope-body">
+              <div className="envelope-flap" />
+              <div className="envelope-seal">💌</div>
+              <div className="envelope-lines">
+                <div className="envelope-line" />
+                <div className="envelope-line" />
+                <div className="envelope-line" />
+              </div>
+            </div>
+            <p
+              style={{
+                color: "oklch(0.75 0.20 350)",
+                marginTop: "1.5rem",
+                fontSize: "1.1rem",
+                textAlign: "center",
+              }}
             >
-              <div
-                className="font-script text-2xl mb-6"
-                style={{ color: "var(--neon-pink)" }}
-              >
-                Meghna,
-              </div>
-              <div
-                className="space-y-4 text-base leading-relaxed"
-                style={{ color: "oklch(0.80 0.04 280)" }}
-              >
-                <p>
-                  Already been like 7 years eh since I know you, and they say if
-                  your friendship lasts longer than 7 years then it is gonna
-                  last for your life. I hope and am sure that&#39;s true because
-                  you are much more than just my best friend, you&#39;re the
-                  love of my life.
-                </p>
-                <p>
-                  We have been through so many highs and that many lows that
-                  I&#39;ve lost count. But the good news is, it means no matter
-                  what may come, we jump over it together and forever.
-                </p>
-                <p>
-                  May your day and everyday be happier than the last. May you
-                  achieve all the good things in life. May we achieve them
-                  together.
-                </p>
-                <p>I love you hon. Have a good 26th &lt;3</p>
-              </div>
-              <div
-                className="mt-8 pt-6"
-                style={{ borderTop: "1px solid oklch(0.35 0.08 350 / 0.3)" }}
-              >
-                <p
-                  className="font-script text-3xl"
-                  style={{ color: "var(--neon-amber)" }}
-                >
-                  Yours lovingly,
-                </p>
-                <p
-                  className="font-script text-2xl mt-1"
-                  style={{ color: "oklch(0.65 0.12 72)" }}
-                >
-                  Kaustuv ❤️
-                </p>
-              </div>
-            </div>
-            <div className="md:col-span-2 p-8 flex flex-col items-center gap-6">
-              <PhotoSlot
-                label="Meghna & Me"
-                className="w-full"
-                style={{ minHeight: 240 } as React.CSSProperties}
-                glowColor="oklch(0.55 0.18 350 / 0.7)"
-              />
-              {/* Heart bird mascot in letter section */}
-              <KurzgesagtBird
-                src="/assets/generated/kurzgesagt-bird-heart-transparent.dim_300x350.png"
-                size={140}
-                animDelay={1.5}
-                className="bird-sway"
-              />
-            </div>
+              A special letter sealed just for Meghna
+            </p>
+            <p
+              style={{
+                color: "oklch(0.60 0.08 280)",
+                marginTop: "0.5rem",
+                fontSize: "0.9rem",
+                textAlign: "center",
+              }}
+            >
+              Opens on April 6th 🎂
+            </p>
           </div>
-        </div>
+        ) : (
+          <div
+            className={envelopeOpen ? "letter-reveal" : ""}
+            style={{
+              opacity: envelopeOpen ? 1 : 0,
+              transition: "opacity 0.5s",
+            }}
+          >
+            {envelopeOpen && (
+              <div
+                className="glass-card overflow-hidden"
+                style={{
+                  border: "1px solid oklch(0.75 0.20 350 / 0.30)",
+                }}
+              >
+                <div className="grid md:grid-cols-5 gap-0">
+                  <div
+                    className="md:col-span-3 p-8 md:p-12"
+                    style={{
+                      borderRight: "1px solid oklch(0.35 0.08 350 / 0.3)",
+                    }}
+                  >
+                    <div
+                      className="font-script text-2xl mb-6"
+                      style={{ color: "var(--neon-pink)" }}
+                    >
+                      Meghna,
+                    </div>
+                    <div
+                      className="space-y-4 text-base leading-relaxed"
+                      style={{ color: "oklch(0.80 0.04 280)" }}
+                    >
+                      <p>
+                        Already been like 7 years eh since I know you, and they
+                        say if your friendship lasts longer than 7 years then it
+                        is gonna last for your life. I hope and am sure
+                        that&#39;s true because you are much more than just my
+                        best friend, you&#39;re the love of my life.
+                      </p>
+                      <p>
+                        We have been through so many highs and that many lows
+                        that I&#39;ve lost count. But the good news is, it means
+                        no matter what may come, we jump over it together and
+                        forever.
+                      </p>
+                      <p>
+                        May your day and everyday be happier than the last. May
+                        you achieve all the good things in life. May we achieve
+                        them together.
+                      </p>
+                      <p>I love you hon. Have a good 26th &lt;3</p>
+                    </div>
+                    <div
+                      className="mt-8 pt-6"
+                      style={{
+                        borderTop: "1px solid oklch(0.35 0.08 350 / 0.3)",
+                      }}
+                    >
+                      <p
+                        className="font-script text-3xl"
+                        style={{ color: "var(--neon-amber)" }}
+                      >
+                        Yours lovingly,
+                      </p>
+                      <p
+                        className="font-script text-2xl mt-1"
+                        style={{ color: "oklch(0.65 0.12 72)" }}
+                      >
+                        Kaustuv ❤️
+                      </p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 p-8 flex flex-col items-center gap-6">
+                    <button
+                      type="button"
+                      style={{
+                        width: "100%",
+                        minHeight: 240,
+                        borderRadius: "12px",
+                        overflow: "hidden",
+                        border: "2px solid oklch(0.75 0.20 350)",
+                        boxShadow: "0 0 20px oklch(0.55 0.18 350 / 0.4)",
+                        cursor: "pointer",
+                        padding: 0,
+                        background: "none",
+                        display: "block",
+                      }}
+                      onClick={() =>
+                        setSelectedPhoto?.({
+                          src: "/assets/uploads/IMG-20250119-WA0027-7.jpg",
+                          label: "Coldplay with You 🎵",
+                          color: "oklch(0.82 0.18 135)",
+                        })
+                      }
+                    >
+                      <img
+                        src="/assets/uploads/IMG-20250119-WA0027-7.jpg"
+                        alt="Coldplay with You"
+                        style={{
+                          width: "100%",
+                          minHeight: 240,
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
+                    </button>
+                    <KurzgesagtBird
+                      src="/assets/generated/kurzgesagt-bird-heart-transparent.dim_300x350.png"
+                      size={140}
+                      animDelay={1.5}
+                      className="bird-sway"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div
           className="reveal text-center mt-12 flex justify-center gap-4"
@@ -1730,6 +1858,11 @@ function Footer() {
 export default function App() {
   useScrollReveal();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoModalData>(null);
+  const checkBirthday = () => {
+    const now = new Date();
+    return now.getMonth() === 3 && now.getDate() === 6;
+  };
+  const [showBirthday] = useState(() => checkBirthday());
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1740,103 +1873,105 @@ export default function App() {
   }, []);
 
   return (
-    <PhotoModalContext.Provider value={setSelectedPhoto}>
-      <div
-        className="min-h-screen"
-        style={{ background: "var(--cosmic-indigo)", position: "relative" }}
-      >
-        {/* Particle canvas */}
-        <ParticleCanvas />
+    <BirthdayContext.Provider value={showBirthday}>
+      <PhotoModalContext.Provider value={setSelectedPhoto}>
+        <div
+          className="min-h-screen"
+          style={{ background: "var(--cosmic-indigo)", position: "relative" }}
+        >
+          {/* Particle canvas */}
+          <ParticleCanvas />
 
-        {/* Game HUD */}
-        <GameHUD />
+          {/* Game HUD */}
+          <GameHUD />
 
-        {/* Navigation */}
-        <Navbar />
+          {/* Navigation */}
+          <Navbar />
 
-        {/* Main content */}
-        <main>
-          <Hero />
-          <TimelineSection />
-          <ForYouSection />
-          <GallerySection />
-          <LoveLetter />
-        </main>
+          {/* Main content */}
+          <main>
+            <Hero />
+            <TimelineSection />
+            <ForYouSection />
+            <GallerySection />
+            <LoveLetter />
+          </main>
 
-        <Footer />
+          <Footer />
 
-        {/* Walking Cat */}
-        <WalkingCatsLayer />
+          {/* Walking Cat */}
+          <WalkingCatsLayer />
 
-        {/* Global Photo Modal */}
-        {selectedPhoto && (
-          <div
-            data-ocid="gallery.modal"
-            tabIndex={-1}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setSelectedPhoto(null);
-            }}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 9999,
-              background: "oklch(0.05 0.02 260 / 0.93)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              animation: "fadeIn 0.2s ease",
-            }}
-            onClick={() => setSelectedPhoto(null)}
-          >
+          {/* Global Photo Modal */}
+          {selectedPhoto && (
             <div
-              onKeyDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
+              data-ocid="gallery.modal"
+              tabIndex={-1}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setSelectedPhoto(null);
+              }}
               style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 9999,
+                background: "oklch(0.05 0.02 260 / 0.93)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
+                animation: "fadeIn 0.2s ease",
               }}
-            >
-              <img
-                src={selectedPhoto.src}
-                alt={selectedPhoto.label}
-                style={{
-                  maxWidth: "90vw",
-                  maxHeight: "80vh",
-                  objectFit: "contain",
-                  borderRadius: 16,
-                  boxShadow: `0 0 60px ${selectedPhoto.color}44`,
-                  border: `2px solid ${selectedPhoto.color}88`,
-                }}
-              />
-            </div>
-            <div
-              className="mt-4 px-5 py-2 rounded-full font-bold uppercase tracking-widest text-sm"
-              style={{
-                background: `${selectedPhoto.color}22`,
-                color: selectedPhoto.color,
-                border: `1px solid ${selectedPhoto.color}66`,
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              {selectedPhoto.label}
-            </div>
-            <button
-              type="button"
-              data-ocid="gallery.close_button"
               onClick={() => setSelectedPhoto(null)}
-              className="mt-4 px-4 py-1 rounded-full text-sm opacity-60 hover:opacity-100 transition-opacity"
-              style={{
-                color: "oklch(0.85 0.04 260)",
-                border: "1px solid oklch(0.40 0.04 260)",
-              }}
             >
-              ✕ Close
-            </button>
-          </div>
-        )}
-      </div>
-    </PhotoModalContext.Provider>
+              <div
+                onKeyDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <img
+                  src={selectedPhoto.src}
+                  alt={selectedPhoto.label}
+                  style={{
+                    maxWidth: "90vw",
+                    maxHeight: "80vh",
+                    objectFit: "contain",
+                    borderRadius: 16,
+                    boxShadow: `0 0 60px ${selectedPhoto.color}44`,
+                    border: `2px solid ${selectedPhoto.color}88`,
+                  }}
+                />
+              </div>
+              <div
+                className="mt-4 px-5 py-2 rounded-full font-bold uppercase tracking-widest text-sm"
+                style={{
+                  background: `${selectedPhoto.color}22`,
+                  color: selectedPhoto.color,
+                  border: `1px solid ${selectedPhoto.color}66`,
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                {selectedPhoto.label}
+              </div>
+              <button
+                type="button"
+                data-ocid="gallery.close_button"
+                onClick={() => setSelectedPhoto(null)}
+                className="mt-4 px-4 py-1 rounded-full text-sm opacity-60 hover:opacity-100 transition-opacity"
+                style={{
+                  color: "oklch(0.85 0.04 260)",
+                  border: "1px solid oklch(0.40 0.04 260)",
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          )}
+        </div>
+      </PhotoModalContext.Provider>
+    </BirthdayContext.Provider>
   );
 }
